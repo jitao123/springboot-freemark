@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>代码生成工具</title>
+
+    <!--vue  开发环境版本，包含了有帮助的命令行警告 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- element 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <!-- axios 开发环境版本，包含了有帮助的命令行警告 -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+</head>
+<body>
+<div id="app">
+    <table>
+        <tr>
+            <td>
+                <el-tag size="mini">数据库用户名</el-tag>
+            </td>
+            <td>
+                <el-input size="mini" v-model="db.username"></el-input>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <el-tag size="mini">数据库密码</el-tag>
+            </td>
+            <td>
+                <el-input size="mini" v-model="db.password"></el-input>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <el-tag size="mini">数据库链接</el-tag>
+            </td>
+            <td>
+                <el-input size="mini" v-model="db.url">
+                    <template slot="prepend">jdbc:mysql://</template>
+                    <template slot="append">?characterEncoding=utf8&useSSL=true&&serverTimezone=GMT%2B8</template>
+                </el-input>
+            </td>
+        </tr>
+    </table>
+    <div style="display: flex">
+        <el-button type="primary" size="mini" @click="connect" :disabled="!disabledButton">链接数据库</el-button>
+        <div style="color: red;font-weight: bold">*{{msg}}*</div>
+        <el-input v-model="packageName" size="mini" style="width:300px"></el-input>
+        <el-button type="primary" @click="config">配置</el-button>
+    </div>
+    <template>
+        <el-table
+                :data="tableData"
+                stripe
+				border
+                style="width: 100%">
+            <el-table-column
+                    prop="tableName"
+                    label="表名称"
+                    width="180">
+            </el-table-column>
+            <el-table-column
+                    label="model名称"
+                    width="180">
+					<template slot-scope='scope'>
+						<el-input v-model='scope.row.moduleName'></el-input>
+					</template>
+            </el-table-column>
+            <el-table-column
+                    label="Mapper名称"
+                    width="180">
+					<template slot-scope='scope'>
+						<el-input v-model='scope.row.mapperName'></el-input>
+					</template>
+            </el-table-column>
+            <el-table-column
+                    label="service名称"
+					 width="180">
+					 <template slot-scope='scope'>
+					 	<el-input v-model='scope.row.serviceName'></el-input>
+					 </template>
+            </el-table-column>
+            <el-table-column
+                    label="controller名称"
+					 width="180">
+					 <template slot-scope='scope'>
+					 	<el-input v-model='scope.row.controllerName'></el-input>
+					 </template>
+            </el-table-column>
+        </el-table>
+		<div><el-button type='success' @click="generatecode">生成代码</el-button></div>
+		<div style="color: red;font-weight: bold;">*{{result}}*</div>
+		<div>{{codePath}}</div>
+    </template>
+</div>
+<script>
+    new Vue({
+        el: "#app",
+        data: function () {
+            return {
+                msg: "数据库未链接",
+                disabledButton: true,
+                packageName: 'com.example.test',
+                db: {
+                    username: "root",
+                    password: "password",
+                    url: "127.0.0.1:3306/mt_baseinfo"
+                },
+                tableData: [],
+				result:'waiting',
+				codePath:''
+            }
+        },
+        methods: {
+            connect: function () {
+                var _this = this;
+                this.db.url = "jdbc:mysql://" + this.db.url + "?characterEncoding=utf8&useSSL=true&&serverTimezone=GMT%2B8";
+                axios.post('http://127.0.0.1:9999/initDb', this.db)
+                    .then(function (response) {
+                        _this.msg = response.data.msg
+                        _this.db = {
+                            username: "root",
+                            password: "password",
+                            url: "127.0.0.1:3306/mt_baseinfo"
+                        }
+                        _this.disabledButton = false;
+                        console.log(response);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            config: function () {
+                var _this = this;
+                axios.post('http://127.0.0.1:9999/config', {packageName: this.packageName})
+                    .then(function (response) {
+                        _this.msg = response.data.msg
+                        _this.tableData = response.data.object;
+                        console.log(response);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+			generatecode(){
+				var _this=this;
+				axios.post('http://127.0.0.1:9999/generatecode', this.tableData)
+				    .then(function (response) {
+						_this.result=response.data.msg;
+						// _this.codePath=response.data.object;
+				        console.log(response.data);
+						console.log(response.data.object);
+				    })
+				    .catch(function (error) {
+				        console.log(error);
+				    });
+			}
+
+        }
+    })
+</script>
+</body>
+</html>
