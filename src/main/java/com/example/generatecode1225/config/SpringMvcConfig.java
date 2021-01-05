@@ -12,9 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @description: spring mvc配置
- * @author: llw
- * @date: 2018-11-15
+ * @description: spring mvc跨域
+ * @author:
+ * @date: 
  */
 @Configuration
 @EnableWebMvc
